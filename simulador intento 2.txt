@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Supervivencia de Tardígrados</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            background-color: #f9fafc;
+        }
+        .container {
+            margin: 20px auto;
+            width: 60%;
+            max-width: 600px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            margin: 10px;
+            padding: 8px;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            margin: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #0078D7;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005EA6;
+        }
+        canvas {
+            margin-top: 30px;
+        }
+        h2 {
+            margin-top: 20px;
+        }
+        .interpretacion {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border: 1px solid #cce7ff;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .tabla-explicativa {
+            margin-top: 30px;
+            text-align: left;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .tabla-explicativa th, .tabla-explicativa td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .tabla-explicativa th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Supervivencia de Tardígrados</h1>
+    <div class="container">
+        <label>Temperatura (°C):</label>
+        <input type="number" id="temperatura" placeholder="Ej: 25">
+        <br>
+        <label>Humedad (%):</label>
+        <input type="number" id="humedad" placeholder="Ej: 50">
+        <br>
+        <label>Radiación (%):</label>
+        <input type="number" id="radiacion" placeholder="Ej: 10">
+        <br>
+        <button onclick="calcular()">Calcular</button>
+        <h2 id="resultado">Probabilidad: -</h2>
+        <canvas id="grafico"></canvas>
+        <canvas id="graficoCircular"></canvas>
+        <canvas id="graficoHistograma"></canvas>
+        <div id="interpretacion" class="interpretacion"></div>
+        <h3>Tabla Explicativa</h3>
+        <table class="tabla-explicativa">
+            <tr>
+                <th>Parámetro</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>Temperatura</td>
+                <td>Óptima alrededor de 25°C. Extremos pueden reducir la probabilidad de supervivencia.</td>
+            </tr>
+            <tr>
+                <td>Humedad</td>
+                <td>Alta humedad (>70%) mejora la probabilidad de supervivencia.</td>
+            </tr>
+            <tr>
+                <td>Radiación</td>
+                <td>Baja radiación (<50%) es ideal para evitar daños genéticos.</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        function calcularProbabilidadSupervivencia(temp, humedad, radiacion) {
+            let pesoTemperatura = 0.6;
+            let pesoHumedad = 0.2;
+            let pesoRadiacion = 0.2;
+
+            function penalizacionTemperatura(temp) {
+                if (temp < -150 || temp > 150) return 0.0;
+                return 1 - Math.abs(temp - 25) / 175;
+            }
+
+            let puntuacion = (
+                pesoTemperatura * penalizacionTemperatura(temp) +
+                pesoHumedad * (humedad / 100) +
+                pesoRadiacion * (1 - radiacion / 100)
+            );
+
+            let probabilidad = puntuacion * 100;
+            return Math.max(0, Math.min(probabilidad, 100));
+        }
+
+        function calcular() {
+            const temp = parseFloat(document.getElementById('temperatura').value);
+            const humedad = parseFloat(document.getElementById('humedad').value);
+            const radiacion = parseFloat(document.getElementById('radiacion').value);
+
+            if (isNaN(temp) || isNaN(humedad) || isNaN(radiacion)) {
+                alert("Por favor, introduce valores válidos.");
+                return;
+            }
+
+            const probabilidad = calcularProbabilidadSupervivencia(temp, humedad, radiacion);
+            document.getElementById('resultado').innerText = `Probabilidad: ${probabilidad.toFixed(2)}%`;
+            mostrarGrafico(temp, humedad, radiacion);
+            mostrarGraficoCircular(probabilidad);
+        }
+
+        function mostrarGrafico(temp, humedad, radiacion) {
+            const ctx = document.getElementById('grafico').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['Temperatura', 'Humedad', 'Radiación'], datasets: [{ data: [temp, humedad, radiacion] }] }
+            });
+        }
+
+        function mostrarGraficoCircular(probabilidad) {
+            const ctx = document.getElementById('graficoCircular').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Supervivencia', 'Riesgo'], datasets: [{ data: [probabilidad, 100 - probabilidad] }] }
+            });
+        }
+    </script>
+</body>
+</html>
